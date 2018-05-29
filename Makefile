@@ -4,19 +4,19 @@
 shell:
 	nix-shell -A shells.ghcjs
 
-## Run in a shell.
-#build:
-#	cabal new-build all
+# Run in a shell.
+build:
+	cabal new-build all --project-file=cabal-ghcjs.project --ghcjs
 
 build_nix:
 	nix-build
 
-## Run in a shell.
+# Run in a shell.
 #test:
-#	cabal new-test
+#	cabal new-test --project-file=cabal-ghcjs.project --ghcjs
 
-#clean:
-#	cabal clean
+clean:
+	rm -rf dist-newstyle
 
 # Run in a shell.
 hoogle:
