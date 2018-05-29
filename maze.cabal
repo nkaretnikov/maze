@@ -53,6 +53,7 @@ executable maze
   -- Other library packages from which modules are imported.
   build-depends:       base >=4.9 && <4.11
                      , reflex-dom
+                     , reflex-dom-canvas
 
   -- Directories containing source files.
   hs-source-dirs:      src
