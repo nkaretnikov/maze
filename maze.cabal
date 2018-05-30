@@ -52,12 +52,17 @@ executable maze
 
   -- Other library packages from which modules are imported.
   build-depends:       base >=4.9 && <4.11
+                     , containers
+                     , ghcjs-dom-jsffi
+                     , lens
                      , reflex-dom
                      , reflex-dom-canvas
+                     , text
 
   -- Directories containing source files.
   hs-source-dirs:      src
 
   -- Base language which the package is written in.
   default-language:    Haskell2010
+  ghc-options:         -Wall -Werror
 
