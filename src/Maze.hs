@@ -8,17 +8,11 @@ import qualified Data.Maybe    as Maybe
 import qualified System.Random as Random
 
 import           Canvas.Types
+import           Cell
 import           Cell.Types
 import qualified Stack         as Stack
 import           Stack.Types
 
-
-isValidCell :: CanvasHeight -> CanvasWidth -> Cell -> Bool
-isValidCell (CanvasHeight h) (CanvasWidth w) (Coord x y)
-   = x >= 0
-  && y >= 0
-  && x < w
-  && y < h
 
 -- | If a value is not in a visited list, then it's not been visited.
 notVisitedNeighbors

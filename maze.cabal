@@ -35,6 +35,7 @@ executable maze
   -- Modules included in this executable, other than Main.
   other-modules:       Canvas
                      , Canvas.Types
+                     , Cell
                      , Cell.Types
                      , Maze
                      , Stack
@@ -46,9 +47,11 @@ executable maze
   -- Other library packages from which modules are imported.
   build-depends:       base >=4.9 && <4.11
                      , containers
+                     , ghcjs-base
                      , ghcjs-dom-jsffi
                      , lens
                      , random
+                     , reflex
                      , reflex-dom
                      , reflex-dom-canvas
                      , text
