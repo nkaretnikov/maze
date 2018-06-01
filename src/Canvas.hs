@@ -3,7 +3,7 @@
 module Canvas where
 
 import           Control.Lens                       ((^.))
-import           Control.Monad                      (forM_)
+import           Control.Monad                      (forM_, when)
 import           Control.Monad.IO.Class             (liftIO)
 import qualified Data.Map                           as Map
 import           Data.Map                           (Map)
@@ -41,17 +41,35 @@ cell cx (Coord x y) (Color color) = do
 path :: CanvasRenderingContext2D -> Coord -> JSM ()
 path cx coord = cell cx coord (Color "lightblue")
 
--- cursor cx x y = cell cx x y ("fuchsia"   :: JSString)
+end :: CanvasRenderingContext2D -> Coord -> JSM ()
+end cx coord = cell cx coord (Color "darkgray")
+
+cursor :: CanvasRenderingContext2D -> Coord -> JSM ()
+cursor cx coord = cell cx coord (Color "salmon")
 
 -- | Specify what to draw.
 action
   :: CanvasHeight -> CanvasWidth
   -> CanvasRenderingContext2D -> Double -> JSM ()
 action (CanvasHeight h) (CanvasWidth w) cx _ = do
+  -- Generate a maze.
   cells <- liftIO $ maze (CanvasHeight $ h `div` step) (CanvasWidth $ w `div` step)
-  forM_ (Set.toList cells) $ \(Coord x y) ->
+  let descCells = Set.toDescList cells
+
+  -- Draw the path.
+  forM_ descCells $ \(Coord x y) ->
     let coord = Coord (x * step) (y * step)
     in path cx coord
+
+  -- Draw the end.
+  when (not $ null descCells) $
+    let Coord x y = head descCells
+    in end cx $ Coord (x * step) (y * step)
+
+  -- Draw the cursor.
+  -- Assumes there's always a cell at this location.
+  let start = Coord 0 0
+  cursor cx start
 
 bodyElement :: MonadWidget t m => m ()
 bodyElement = do
