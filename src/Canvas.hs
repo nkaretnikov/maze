@@ -27,17 +27,17 @@ import           Cell
 import           Cell.Types
 import           Maze
 
-makeCanvasAttrs :: CanvasHeight -> CanvasWidth -> CanvasId -> Map Text Text
-makeCanvasAttrs (CanvasHeight h) (CanvasWidth w) (CanvasId i) =
-  Map.fromList
-    [ ("height", Text.pack $ show h)
-    , ("width" , Text.pack $ show w)
-    , ("id"    , Text.pack $ show i)
-    ]
-
 -- | The size of a cell.
 step :: Int
 step = 10
+
+makeCanvasAttrs :: CanvasHeight -> CanvasWidth -> CanvasId -> Map Text Text
+makeCanvasAttrs (CanvasHeight h) (CanvasWidth w) (CanvasId i) =
+  Map.fromList
+    [ ("height", Text.pack $ show $ h * step)
+    , ("width" , Text.pack $ show $ w * step)
+    , ("id"    , Text.pack $ show i)
+    ]
 
 cell :: CanvasRenderingContext2D -> Coord -> Color -> JSM ()
 cell cx (Coord x y) (Color color) = do
@@ -113,18 +113,11 @@ bodyElement :: MonadWidget t m => m ()
 bodyElement = do
   -- XXX: Make these arguments and move to 'Main'.
   -- XXX: Because of how 'maze' works currently, these must be odd.
-  let h  = 11  -- 61
-      w  = 11  -- 61
-      -- XXX: Need to merge this into one.
-      -- XXX: Define proper instances to make scaling and addition easier.
-      canvasH = CanvasHeight h
-      canvasW = CanvasWidth w
+  let canvasH  = CanvasHeight 11  -- 61
+      canvasW  = CanvasWidth  11  -- 61
       canvasId = CanvasId "maze"
 
-      canvasAttrs = makeCanvasAttrs
-                      (CanvasHeight $ h * step)
-                      (CanvasWidth  $ w * step)
-                      canvasId
+      canvasAttrs = makeCanvasAttrs canvasH canvasW canvasId
 
   -- Create the canvas element.
   (elOut, (elIn, _)) <- RD.elAttr' "div" (Map.singleton "tabindex" "0") $
