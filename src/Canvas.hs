@@ -1,3 +1,4 @@
+{-# language FlexibleContexts #-}
 {-# language OverloadedStrings #-}
 
 module Canvas where
@@ -12,13 +13,15 @@ import qualified Data.Set                           as Set
 import           Data.Text                          (Text)
 import qualified Data.Text                          as Text
 import qualified Reflex                             as R
-import           Reflex.Dom                         (MonadWidget)
+import           Reflex.Dom                         (MonadWidget, Dynamic, Event)
 import qualified Reflex.Dom                         as RD
+import qualified GHCJS.DOM                          as JSDOM
 import           GHCJS.DOM.CanvasRenderingContext2D (CanvasRenderingContext2D)
 import qualified GHCJS.DOM.CanvasRenderingContext2D as C
 import           JavaScript.Web.Location            (getWindowLocation, reload)
-import           GHCJS.DOM.Types                    (JSM)
+import           GHCJS.DOM.Types                    (JSM, liftJSM)
 --import           GHCJS.DOM.JSFFI.Generated.HTMLElement (focus)
+import           Reflex.Dom.CanvasBuilder.Types     (HasRenderFn, RenderContext)
 import qualified Reflex.Dom.CanvasBuilder.Types     as Canvas
 import qualified Reflex.Dom.CanvasDyn               as CDyn
 
@@ -26,6 +29,41 @@ import           Canvas.Types
 import           Cell
 import           Cell.Types
 import           Maze
+
+drawWithCx
+  :: ( MonadWidget t m
+     , HasRenderFn c ( RenderContext c )
+     )
+  => Dynamic t ( RenderContext c )
+  -> Dynamic t ( RenderContext c -> Double -> JSM a )
+  -> Event t ()
+  -> m ( Event t a )
+drawWithCx dContext dAction eApply =
+  let
+    nextFrame cx f = liftJSM $
+      JSDOM.nextAnimationFrame (f cx)
+  in
+    -- The original 'drawWithCx' code:
+    {-
+    RD.performEvent
+    ( nextFrame
+      <$> R.current dContext
+      <*> R.current dAction
+      <@ eApply
+    )
+    -}
+    -- where '<@' is 'tag'.
+    --
+    -- From the 'tagPromptlyDyn' docstring:
+    {-
+    `tagPromptlyDyn d e` differs from `tag (current d) e` in the case that e is
+    firing at the same time that d is changing. With `tagPromptlyDyn d e`, the
+    *new* value of d will replace the value of e, whereas with `tag (current d) e`,
+    the *old* value will be used, since the Behavior won't be updated until the end
+    of the frame.
+    -}
+    RD.performEvent $ RD.tagPromptlyDyn
+      (nextFrame <$> dContext <*> dAction) eApply
 
 -- | The size of a cell.
 step :: Int
@@ -168,6 +206,6 @@ bodyElement = do
   let evMoved = R.updated dynCursor
       evCombined = RD.leftmost [evApply, () <$ evMoved]
 
-  _ <- CDyn.drawWithCx dyn2D (action cells <$> dynCursor) evCombined
+  _ <- drawWithCx dyn2D (action cells <$> dynCursor) evCombined
 
   return ()
