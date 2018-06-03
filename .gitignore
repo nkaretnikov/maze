@@ -1,4 +1,6 @@
 *.swp
+*.patch
+*.diff
 TODO.md
 dist-newstyle/
 dist/
