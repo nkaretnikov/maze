@@ -16,11 +16,11 @@ import qualified Reflex                             as R
 import           Reflex.Dom                         (MonadWidget, Dynamic, Event)
 import qualified Reflex.Dom                         as RD
 import qualified GHCJS.DOM                          as JSDOM
+import qualified GHCJS.DOM.JSFFI.Generated.Document as Doc
 import           GHCJS.DOM.CanvasRenderingContext2D (CanvasRenderingContext2D)
 import qualified GHCJS.DOM.CanvasRenderingContext2D as C
 import           JavaScript.Web.Location            (getWindowLocation, reload)
-import           GHCJS.DOM.Types                    (JSM, liftJSM)
---import           GHCJS.DOM.JSFFI.Generated.HTMLElement (focus)
+import           GHCJS.DOM.Types                    (JSM, liftJSM, toElement)
 import           Reflex.Dom.CanvasBuilder.Types     (HasRenderFn, RenderContext)
 import qualified Reflex.Dom.CanvasBuilder.Types     as Canvas
 import qualified Reflex.Dom.CanvasDyn               as CDyn
@@ -118,8 +118,6 @@ action cells coord cx _ = do
   -- Restore the initial state.
   C.restore cx
 
--- XXX: Cell coordinates are repeated when direction changes.
--- It looks like the current event forces the previous one.
 move :: (Coord -> Coord) -> Set Cell -> CanvasHeight -> CanvasWidth -> Coord -> Coord
 move f cells h w cur =
   let new = f cur
@@ -161,8 +159,6 @@ bodyElement = do
   (elOut, (elIn, _)) <- RD.elAttr' "div" (Map.singleton "tabindex" "0") $
     RD.elAttr' "canvas" canvasAttrs RD.blank
 
-  -- XXX: Focus on the canvas without additional clicks.
-
   -- Get the context.
   dyn2D <- fmap (Canvas._canvasInfo_context)
     -- Create a canvas for a 2D drawing.
@@ -181,17 +177,32 @@ bodyElement = do
   evUpBtn    <- RD.button "up"
   evRightBtn <- RD.button "right"
 
+  -- Focus on the canvas without additional clicks.
+  -- XXX: Use safe alternatives.  IIUC, these might break if the target is not a
+  -- browser.
+  doc <- JSDOM.currentDocumentUnchecked
+  rawBody <- toElement <$> Doc.getBodyUnchecked doc
+  body <- RD.wrapRawElement rawBody RD.def
+
   let evLeft  = RD.keydown RD.KeyH      elOut
              <> RD.keydown RD.ArrowLeft elOut
+             <> RD.keydown RD.KeyH      body
+             <> RD.keydown RD.ArrowLeft body
              <> evLeftBtn
       evDown  = RD.keydown RD.KeyJ      elOut
              <> RD.keydown RD.ArrowDown elOut
+             <> RD.keydown RD.KeyJ      body
+             <> RD.keydown RD.ArrowDown body
              <> evDownBtn
       evUp    = RD.keydown RD.KeyK      elOut
              <> RD.keydown RD.ArrowUp   elOut
+             <> RD.keydown RD.KeyK      body
+             <> RD.keydown RD.ArrowUp   body
              <> evUpBtn
       evRight = RD.keydown RD.KeyL       elOut
              <> RD.keydown RD.ArrowRight elOut
+             <> RD.keydown RD.KeyL       body
+             <> RD.keydown RD.ArrowRight body
              <> evRightBtn
 
   -- Assumes there's always a cell at this location.
