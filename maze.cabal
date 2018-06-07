@@ -49,7 +49,6 @@ executable maze
                      , containers
                      , ghcjs-base
                      , ghcjs-dom-jsffi
-                     , lens
                      , random
                      , reflex
                      , reflex-dom
