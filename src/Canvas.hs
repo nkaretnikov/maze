@@ -171,11 +171,29 @@ bodyElement = do
   -- Perform the action when the page is loaded.
   evApply <- RD.getPostBuild
 
+  -- Buttons.
   -- Cursor handling.
   evLeftBtn  <- RD.button "left"
   evDownBtn  <- RD.button "down"
   evUpBtn    <- RD.button "up"
   evRightBtn <- RD.button "right"
+
+  -- Help.
+  let helpAttrs =
+        Map.singleton "style" $ Text.intercalate "; "
+          [ "position: relative"
+          , "padding-left: 20px"
+          , "font-size: small"
+          ]
+  RD.elAttr "span" helpAttrs $ do
+      evHelpBtn <- RD.button "?"
+      let msg = "Find your way through the maze!"
+             <> " Use hjkl, arrows, or buttons to move."
+          help True  = msg
+          help False = ""
+      RD.el "br" $ RD.blank
+      RD.dynText . (fmap help) =<<
+        RD.foldDyn (\_ b -> not b) False evHelpBtn
 
   -- Focus on the canvas without additional clicks.
   -- XXX: Use safe alternatives.  IIUC, these might break if the target is not a
