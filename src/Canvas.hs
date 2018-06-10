@@ -156,13 +156,13 @@ bodyElement = do
       canvasAttrs = makeCanvasAttrs canvasH canvasW canvasId
 
   -- Create the canvas element.
-  (elOut, (elIn, _)) <- RD.elAttr' "div" (Map.singleton "tabindex" "0") $
+  (_, (elCanvas, _)) <- RD.elAttr' "div" Map.empty $
     RD.elAttr' "canvas" canvasAttrs RD.blank
 
   -- Get the context.
   dyn2D <- fmap (Canvas._canvasInfo_context)
     -- Create a canvas for a 2D drawing.
-    <$> CDyn.dContext2d (Canvas.CanvasConfig elIn [])
+    <$> CDyn.dContext2d (Canvas.CanvasConfig elCanvas [])
 
   -- Maze.
   -- Generate a maze.
@@ -184,24 +184,16 @@ bodyElement = do
   rawBody <- toElement <$> Doc.getBodyUnchecked doc
   body <- RD.wrapRawElement rawBody RD.def
 
-  let evLeft  = RD.keydown RD.KeyH      elOut
-             <> RD.keydown RD.ArrowLeft elOut
-             <> RD.keydown RD.KeyH      body
+  let evLeft  = RD.keydown RD.KeyH      body
              <> RD.keydown RD.ArrowLeft body
              <> evLeftBtn
-      evDown  = RD.keydown RD.KeyJ      elOut
-             <> RD.keydown RD.ArrowDown elOut
-             <> RD.keydown RD.KeyJ      body
+      evDown  = RD.keydown RD.KeyJ      body
              <> RD.keydown RD.ArrowDown body
              <> evDownBtn
-      evUp    = RD.keydown RD.KeyK      elOut
-             <> RD.keydown RD.ArrowUp   elOut
-             <> RD.keydown RD.KeyK      body
+      evUp    = RD.keydown RD.KeyK      body
              <> RD.keydown RD.ArrowUp   body
              <> evUpBtn
-      evRight = RD.keydown RD.KeyL       elOut
-             <> RD.keydown RD.ArrowRight elOut
-             <> RD.keydown RD.KeyL       body
+      evRight = RD.keydown RD.KeyL       body
              <> RD.keydown RD.ArrowRight body
              <> evRightBtn
 
