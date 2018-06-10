@@ -149,8 +149,8 @@ bodyElement :: MonadWidget t m => m ()
 bodyElement = do
   -- XXX: Make these arguments and move to 'Main'.
   -- XXX: Because of how 'maze' works currently, these must be odd.
-  let canvasH  = CanvasHeight 11  -- 61
-      canvasW  = CanvasWidth  11  -- 61
+  let canvasH  = CanvasHeight 51  -- 11
+      canvasW  = CanvasWidth  51  -- 11
       canvasId = CanvasId "maze"
 
       canvasAttrs = makeCanvasAttrs canvasH canvasW canvasId
