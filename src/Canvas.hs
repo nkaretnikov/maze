@@ -3,6 +3,7 @@
 
 module Canvas where
 
+import           Control.Applicative                (liftA2)
 import           Control.Monad                      (forM_, when)
 import           Control.Monad.IO.Class             (liftIO)
 import qualified Data.Map                           as Map
@@ -16,11 +17,14 @@ import qualified Reflex                             as R
 import           Reflex.Dom                         (MonadWidget, Dynamic, Event)
 import qualified Reflex.Dom                         as RD
 import qualified GHCJS.DOM                          as JSDOM
+import qualified GHCJS.DOM.EventM                   as EventM
 import qualified GHCJS.DOM.JSFFI.Generated.Document as Doc
+import qualified GHCJS.DOM.JSFFI.Generated.GlobalEventHandlers as GEH
 import           GHCJS.DOM.CanvasRenderingContext2D (CanvasRenderingContext2D)
 import qualified GHCJS.DOM.CanvasRenderingContext2D as C
 import           JavaScript.Web.Location            (getWindowLocation, reload)
-import           GHCJS.DOM.Types                    (JSM, liftJSM, toElement)
+import           GHCJS.DOM.Types
+  (JSM, liftJSM, toElement, uncheckedCastTo, HTMLElement (..))
 import           Reflex.Dom.CanvasBuilder.Types     (HasRenderFn, RenderContext)
 import qualified Reflex.Dom.CanvasBuilder.Types     as Canvas
 import qualified Reflex.Dom.CanvasDyn               as CDyn
@@ -95,8 +99,10 @@ cursor cx coord = cell cx coord (Color "salmon")
 -- XXX: Do not redraw the whole canvas on each move.
 
 -- | Draw the maze.
-action :: Set Cell -> Coord -> CanvasRenderingContext2D -> Double -> JSM ()
-action cells coord cx _ = do
+action :: Set Cell -> Coord -> (Int, Int) -> CanvasRenderingContext2D -> Double -> JSM ()
+action cells coord (mouseX, mouseY) cx _ = do
+  print $ "mouse: " ++ show mouseX ++ ", " ++ show mouseY  -- XXX: debug
+
   -- Draw the path.
   forM_ cells $ path cx
 
@@ -224,9 +230,14 @@ bodyElement = do
     , moveRight cells canvasH canvasW <$ evRight
     ]
 
-  let evMoved = R.updated dynCursor
-      evCombined = RD.leftmost [evApply, () <$ evMoved]
+  let htmlElCanvas = uncheckedCastTo HTMLElement $ RD._element_raw elCanvas
+  evMouseMove <- RD.wrapDomEvent htmlElCanvas (`EventM.on` GEH.mouseMove) EventM.uiPageXY
+  dynMouseMove <- R.holdDyn (0,0) evMouseMove
 
-  _ <- drawWithCx dyn2D (action cells <$> dynCursor) evCombined
+  let evMoved = R.updated dynCursor
+      evMouseMoved = R.updated dynMouseMove
+      evCombined = RD.leftmost [evApply, () <$ evMoved, () <$ evMouseMoved]
+
+  _ <- drawWithCx dyn2D (liftA2 (action cells) dynCursor dynMouseMove) evCombined
 
   return ()
